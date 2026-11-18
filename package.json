@@ -3,6 +3,7 @@
   "productName": "Time Tracker",
   "version": "0.1.0",
   "description": "A desktop time tracking app for Windows, built with Electron, React and TypeScript.",
+  "author": "armendeveloper",
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {
@@ -12,7 +13,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "dist:win": "npm run build && electron-builder --win --publish never"
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "icons": "electron scripts/generate-icons.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",

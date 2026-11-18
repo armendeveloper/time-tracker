@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: End-to-end tests
+        run: xvfb-run -a npx playwright test --trace off
+
+  windows-installer:
+    name: Windows installer
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win
+      - name: Install and launch (smoke test)
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release/*/*-Setup-*.exe | Select-Object -First 1
+          $setup = Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw "Installer exited with code $($setup.ExitCode)" }
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Time Tracker\Time Tracker.exe'
+          if (-not (Test-Path $exe)) { throw "App was not installed at $exe" }
+          $app = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 15
+          if ($app.HasExited) { throw "App exited early with code $($app.ExitCode)" }
+          Write-Host "Installed to $exe; app is running (pid $($app.Id))."
+          Get-Process -Name 'Time Tracker' -ErrorAction SilentlyContinue | Stop-Process -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: time-tracker-windows-installer
+          path: release/*/*.exe
+          if-no-files-found: error

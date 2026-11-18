@@ -32,6 +32,7 @@ export class AppTray {
   private readonly activeIcon = loadIcon(active16, active32)
   private tooltipTimer: NodeJS.Timeout | null = null
   private state: AppData | null = null
+  private hiddenNoticeShown = false
 
   constructor(private readonly actions: TrayActions) {
     this.tray = new Tray(this.idleIcon)
@@ -80,6 +81,17 @@ export class AppTray {
       { label: 'Quit', click: () => this.actions.quit() }
     )
     this.tray.setContextMenu(Menu.buildFromTemplate(template))
+  }
+
+  /** Tells the user (once per session, Windows only) that closing the window kept the app running. */
+  notifyHiddenToTray(): void {
+    if (this.hiddenNoticeShown || process.platform !== 'win32') return
+    this.hiddenNoticeShown = true
+    this.tray.displayBalloon({
+      iconType: 'info',
+      title: 'Time Tracker is still running',
+      content: 'Timers keep running in the system tray. Right-click the tray icon and choose Quit to exit.'
+    })
   }
 
   destroy(): void {

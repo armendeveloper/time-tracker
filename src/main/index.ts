@@ -11,9 +11,12 @@ import appIcon from '../../resources/icon.png?asset'
 
 const APP_ID = 'com.timetracker.desktop'
 
-// Lets tests (and power users) keep data in a separate folder.
+// Lets tests (and power users) keep data in a separate folder. During development,
+// use a separate folder by default so an installed copy's data is never touched.
 if (process.env.TIME_TRACKER_USER_DATA) {
   app.setPath('userData', path.resolve(process.env.TIME_TRACKER_USER_DATA))
+} else if (!app.isPackaged) {
+  app.setPath('userData', `${app.getPath('userData')} (Dev)`)
 }
 
 let mainWindow: BrowserWindow | null = null
@@ -62,6 +65,7 @@ function createWindow(): void {
     if (!isQuitting && store.getState().settings.closeToTray) {
       event.preventDefault()
       mainWindow?.hide()
+      tray?.notifyHiddenToTray()
     }
   })
 

@@ -11,6 +11,9 @@ export default defineConfig({
         '@shared': resolve(__dirname, 'src/shared')
       }
     },
-    plugins: [react()]
+    plugins: [react()],
+    build: {
+      minify: true
+    }
   }
 })
